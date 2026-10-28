@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>마음 읽기</title>
+<meta property="og:url" content="https://web-interface.github.io/mind/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="너 지금 무슨 생각 하는지 맞혀볼게">
+<meta property="og:description" content="딱 1분만. 숫자 하나만 떠올려 봐.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0b1a;
+    --bg2: #1c1536;
+    --ink: #ece6ff;
+    --muted: #9d93c2;
+    --gold: #f2cf7a;
+    --line: rgba(236, 230, 255, .12);
+    --cell: rgba(255, 255, 255, .04);
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { height: 100%; }
+  body {
+    background: radial-gradient(ellipse at 50% 0%, var(--bg2), var(--bg) 70%) fixed, var(--bg);
+    color: var(--ink);
+    font-family: "Gowun Batang", "Apple SD Gothic Neo", "Malgun Gothic", serif;
+    -webkit-tap-highlight-color: transparent;
+    overflow-x: hidden;
+  }
+  .stars { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
+  .stars i {
+    position: absolute; width: 2px; height: 2px; border-radius: 50%;
+    background: #fff; opacity: .5; animation: twinkle 4s ease-in-out infinite;
+  }
+  @keyframes twinkle { 50% { opacity: .08; } }
+
+  main {
+    position: relative; z-index: 1;
+    max-width: 520px; margin: 0 auto; min-height: 100%;
+    padding: 40px 16px 32px;
+    display: flex; flex-direction: column; justify-content: center;
+  }
+  section { display: none; text-align: center; animation: fade .7s ease both; }
+  section.on { display: block; }
+  @keyframes fade { from { opacity: 0; transform: translateY(10px); } }
+
+  h1 { font-size: clamp(26px, 7vw, 34px); line-height: 1.4; font-weight: 700; margin-bottom: 14px; }
+  h2 { font-size: clamp(20px, 5.5vw, 24px); line-height: 1.5; font-weight: 700; margin-bottom: 12px; }
+  p { color: var(--muted); line-height: 1.8; font-size: 16px; }
+  p b { color: var(--ink); font-weight: 700; }
+  .step { color: var(--gold); letter-spacing: .3em; font-size: 12px; margin-bottom: 18px; }
+
+  .orb {
+    width: 150px; height: 150px; margin: 0 auto 30px; border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #fff8 0 6%, #b9a4ff55 18%, #5a3fb466 45%, #1b1240 75%);
+    box-shadow: 0 0 60px #7b5cff55, inset 0 0 40px #0008;
+    display: grid; place-items: center;
+    animation: float 5s ease-in-out infinite;
+  }
+  @keyframes float { 50% { transform: translateY(-8px); } }
+
+  .example {
+    margin: 22px auto 0; padding: 16px 18px; max-width: 320px;
+    border: 1px solid var(--line); border-radius: 14px; background: var(--cell);
+    font-size: 15px; line-height: 2; color: var(--muted);
+  }
+  .example em { font-style: normal; color: var(--gold); font-weight: 700; }
+
+  button {
+    margin-top: 32px; padding: 15px 34px; border: 1px solid #f2cf7a88; border-radius: 999px;
+    background: linear-gradient(180deg, #f2cf7a22, #f2cf7a08);
+    color: var(--gold); font: inherit; font-size: 17px; font-weight: 700; cursor: pointer;
+    transition: transform .15s, background .2s;
+  }
+  button:active { transform: scale(.96); }
+  button:hover { background: #f2cf7a2a; }
+
+  .grid {
+    margin: 20px auto 0;
+    display: grid; grid-template-columns: repeat(10, 1fr); gap: 3px;
+  }
+  .grid div {
+    aspect-ratio: 1; border-radius: 6px; background: var(--cell);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    line-height: 1.1;
+  }
+  .grid small { font-size: clamp(9px, 2.6vw, 12px); color: var(--muted); font-family: system-ui, sans-serif; }
+  .grid span { font-size: clamp(14px, 4.4vw, 20px); color: var(--ink); font-family: "Segoe UI Symbol", "Apple Symbols", system-ui, sans-serif; }
+
+  .reading .orb { animation: pulse 1s ease-in-out infinite; }
+  @keyframes pulse {
+    50% { box-shadow: 0 0 110px #a98bffaa, inset 0 0 40px #0008; transform: scale(1.05); }
+  }
+  .answer {
+    font-size: 72px; color: var(--gold); text-shadow: 0 0 24px #f2cf7aaa;
+    font-family: "Segoe UI Symbol", "Apple Symbols", system-ui, sans-serif;
+    opacity: 0; transform: scale(.4); transition: all 1s cubic-bezier(.2, 1.4, .4, 1);
+  }
+  .answer.show { opacity: 1; transform: scale(1); }
+  #readMsg { min-height: 1.8em; }
+</style>
+</head>
+<body>
+<div class="stars" id="stars"></div>
+<main>
+
+  <section class="on" id="s0">
+    <div class="orb"></div>
+    <h1>지금부터<br>네 마음을 읽어볼게</h1>
+    <p>딱 1분만 집중해 줘.<br>아무한테도 말하지 말고, 머릿속으로만.</p>
+    <button data-go="s1">시작하기</button>
+  </section>
+
+  <section id="s1">
+    <div class="step">STEP 1</div>
+    <h2>두 자리 숫자를<br>하나 떠올려 봐</h2>
+    <p><b>10부터 99 사이</b>라면 아무거나 좋아.<br>정했으면 절대 바꾸면 안 돼.</p>
+    <button data-go="s2">정했어</button>
+  </section>
+
+  <section id="s2">
+    <div class="step">STEP 2</div>
+    <h2>이제 간단한 계산 하나</h2>
+    <p>그 숫자의 <b>각 자리 숫자를 더한 다음</b>,<br><b>처음 숫자에서 그만큼 빼.</b></p>
+    <div class="example">
+      예를 들어 <em>53</em>이었다면<br>
+      5 + 3 = 8<br>
+      53 − 8 = <em>45</em>
+    </div>
+    <button data-go="s3">계산했어</button>
+  </section>
+
+  <section id="s3">
+    <div class="step">STEP 3</div>
+    <h2>네가 구한 숫자 옆에 있는<br>기호를 찾아봐</h2>
+    <p>찾았으면 그 기호만 떠올려.<br>눈을 감고 3초 동안 집중해.</p>
+    <div class="grid" id="grid"></div>
+    <button id="readBtn">🔮 집중했어</button>
+  </section>
+
+  <section id="s4">
+    <div class="orb"><div class="answer" id="answer"></div></div>
+    <h2 id="readMsg">읽는 중…</h2>
+    <p id="readSub">조금만 더 집중해.</p>
+    <button id="again" style="visibility:hidden">한 번 더 해볼래?</button>
+  </section>
+
+</main>
+<script>
+  const SYMBOLS = ['★','☆','♠','♣','♥','♦','♪','♫','☾','✿','❀','✦','◆','◇','▲','△','●','○','■','□','✚','✕','❖','✶','❂','♜','♞','☽'];
+  let target = '';
+
+  function shuffle(a) {
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  // 9의 배수 칸에는 항상 같은 기호, 나머지는 매번 섞은 다른 기호
+  function deal() {
+    const pool = shuffle(SYMBOLS.slice());
+    target = pool.shift();
+    // 다른 기호 수를 줄여서 정답 기호만 유난히 많아 보이지 않게
+    const others = pool.slice(0, 8);
+    const grid = document.getElementById('grid');
+    grid.innerHTML = '';
+    for (let n = 0; n < 100; n++) {
+      const sym = n % 9 === 0 ? target : others[Math.floor(Math.random() * others.length)];
+      grid.insertAdjacentHTML('beforeend', `<div><small>${n}</small><span>${sym}</span></div>`);
+    }
+  }
+
+  function go(id) {
+    document.querySelectorAll('section').forEach(s => s.classList.toggle('on', s.id === id));
+    window.scrollTo(0, 0);
+  }
+
+  document.querySelectorAll('[data-go]').forEach(b => b.onclick = () => go(b.dataset.go));
+
+  document.getElementById('readBtn').onclick = () => {
+    go('s4');
+    const s4 = document.getElementById('s4');
+    const msg = document.getElementById('readMsg');
+    const sub = document.getElementById('readSub');
+    const ans = document.getElementById('answer');
+    const again = document.getElementById('again');
+    ans.textContent = target;
+    ans.classList.remove('show');
+    again.style.visibility = 'hidden';
+    s4.classList.add('reading');
+    msg.textContent = '읽는 중…';
+    sub.textContent = '조금만 더 집중해.';
+    setTimeout(() => { msg.textContent = '보이기 시작했어…'; sub.textContent = '흐릿한 모양이 하나 떠올라.'; }, 1600);
+    setTimeout(() => {
+      s4.classList.remove('reading');
+      ans.classList.add('show');
+      msg.textContent = '네가 떠올린 건 이거지?';
+      sub.textContent = '';
+      setTimeout(() => again.style.visibility = 'visible', 1200);
+    }, 3400);
+  };
+
+  document.getElementById('again').onclick = () => { deal(); go('s1'); };
+
+  const stars = document.getElementById('stars');
+  for (let i = 0; i < 60; i++) {
+    const s = document.createElement('i');
+    s.style.left = Math.random() * 100 + '%';
+    s.style.top = Math.random() * 100 + '%';
+    s.style.animationDelay = (Math.random() * 4) + 's';
+    stars.appendChild(s);
+  }
+
+  deal();
+</script>
+</body>
+</html>
